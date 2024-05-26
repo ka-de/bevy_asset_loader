@@ -15,7 +15,7 @@
 //!         .add_plugins(DefaultPlugins)
 //! # */
 //! #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-//! #       .init_resource::<iyes_progress::ProgressCounter>()
+//! #       .init_resource::<bevy_progress::ProgressCounter>()
 //!         .init_state::<GameState>()
 //!         .add_loading_state(
 //!             LoadingState::new(GameState::Loading)
@@ -83,22 +83,27 @@ pub mod standard_dynamic_asset;
 /// Most commonly used types
 pub mod prelude {
     #[doc(hidden)]
-    pub use crate::loading_state::config::{ConfigureLoadingState, LoadingStateConfig};
+    pub use crate::loading_state::config::{ ConfigureLoadingState, LoadingStateConfig };
     #[doc(hidden)]
     #[cfg(feature = "standard_dynamic_assets")]
     pub use crate::standard_dynamic_asset::{
-        RegisterStandardDynamicAsset, StandardDynamicAsset, StandardDynamicAssetArrayCollection,
+        RegisterStandardDynamicAsset,
+        StandardDynamicAsset,
+        StandardDynamicAssetArrayCollection,
         StandardDynamicAssetCollection,
     };
     #[doc(hidden)]
     pub use crate::{
-        asset_collection::{AssetCollection, AssetCollectionApp, AssetCollectionWorld},
+        asset_collection::{ AssetCollection, AssetCollectionApp, AssetCollectionWorld },
         dynamic_asset::{
-            DynamicAsset, DynamicAssetCollection, DynamicAssetCollections, DynamicAssetType,
+            DynamicAsset,
+            DynamicAssetCollection,
+            DynamicAssetCollections,
+            DynamicAssetType,
             DynamicAssets,
         },
-        loading_state::{LoadingState, LoadingStateAppExt, LoadingStateSet},
-        mapped::{AssetFileName, AssetFileStem, AssetLabel, MapKey},
+        loading_state::{ LoadingState, LoadingStateAppExt, LoadingStateSet },
+        mapped::{ AssetFileName, AssetFileStem, AssetLabel, MapKey },
     };
 }
 

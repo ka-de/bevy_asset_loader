@@ -9,22 +9,20 @@ fn same_collection_multiple_times() {
     app.init_state::<MyStates>();
 
     #[cfg(feature = "progress_tracking")]
-    app.add_plugins(iyes_progress::ProgressPlugin::new(MyStates::Load));
-    app.add_plugins((
-        MinimalPlugins,
-        AssetPlugin::default(),
-        AudioPlugin::default(),
-    ))
-    .add_loading_state(
-        LoadingState::new(MyStates::Load)
-            .continue_to_state(MyStates::Play)
-            .load_collection::<MyAssets>()
-            .load_collection::<MyAssets>(),
-    )
-    .configure_loading_state(LoadingStateConfig::new(MyStates::Load).load_collection::<MyAssets>())
-    .add_systems(Update, (quit.run_if(in_state(MyStates::Play)), timeout))
-    .add_systems(OnEnter(MyStates::Play), use_loading_assets)
-    .run();
+    app.add_plugins(bevy_progress::ProgressPlugin::new(MyStates::Load));
+    app.add_plugins((MinimalPlugins, AssetPlugin::default(), AudioPlugin::default()))
+        .add_loading_state(
+            LoadingState::new(MyStates::Load)
+                .continue_to_state(MyStates::Play)
+                .load_collection::<MyAssets>()
+                .load_collection::<MyAssets>()
+        )
+        .configure_loading_state(
+            LoadingStateConfig::new(MyStates::Load).load_collection::<MyAssets>()
+        )
+        .add_systems(Update, (quit.run_if(in_state(MyStates::Play)), timeout))
+        .add_systems(OnEnter(MyStates::Play), use_loading_assets)
+        .run();
 }
 
 #[derive(AssetCollection, Resource)]
@@ -48,7 +46,7 @@ fn use_loading_assets(assets: Res<MyAssets>, asset_server: Res<AssetServer>) {
 }
 
 fn timeout(time: Res<Time>) {
-    if time.elapsed_seconds_f64() > 30. {
+    if time.elapsed_seconds_f64() > 30.0 {
         panic!("The app did not finish in 30 seconds");
     }
 }

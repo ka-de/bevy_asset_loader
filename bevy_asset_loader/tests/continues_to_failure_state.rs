@@ -9,13 +9,13 @@ fn continues_to_failure_state() {
     app.init_state::<MyStates>();
 
     #[cfg(feature = "progress_tracking")]
-    app.add_plugins(iyes_progress::ProgressPlugin::new(MyStates::Load));
+    app.add_plugins(bevy_progress::ProgressPlugin::new(MyStates::Load));
     app.add_plugins((MinimalPlugins, AssetPlugin::default()))
         .add_loading_state(
             LoadingState::new(MyStates::Load)
                 .continue_to_state(MyStates::Next)
                 .on_failure_continue_to_state(MyStates::Error)
-                .load_collection::<Audio>(),
+                .load_collection::<Audio>()
         )
         .add_systems(Update, timeout.run_if(in_state(MyStates::Load)))
         .add_systems(OnEnter(MyStates::Next), fail)
@@ -32,7 +32,7 @@ fn exit(mut exit: EventWriter<AppExit>) {
 }
 
 fn timeout(time: Res<Time>) {
-    if time.elapsed_seconds_f64() > 10. {
+    if time.elapsed_seconds_f64() > 10.0 {
         panic!("The asset loader did not change the state in 10 seconds");
     }
 }

@@ -4,32 +4,46 @@ mod systems;
 /// Configuration of loading states
 pub mod config;
 
-use bevy::app::{App, Plugin};
-use bevy::asset::{Asset, UntypedHandle};
+use bevy::app::{ App, Plugin };
+use bevy::asset::{ Asset, UntypedHandle };
 use bevy::ecs::{
     schedule::{
-        common_conditions::in_state, InternedScheduleLabel, IntoSystemConfigs,
-        IntoSystemSetConfigs, NextState, OnEnter, ScheduleLabel, State, States, SystemSet,
+        common_conditions::in_state,
+        InternedScheduleLabel,
+        IntoSystemConfigs,
+        IntoSystemSetConfigs,
+        NextState,
+        OnEnter,
+        ScheduleLabel,
+        State,
+        States,
+        SystemSet,
     },
     system::Resource,
     world::FromWorld,
 };
-use bevy::prelude::{StateTransition, Update};
-use bevy::utils::{default, HashMap, HashSet};
+use bevy::prelude::{ StateTransition, Update };
+use bevy::utils::{ default, HashMap, HashSet };
 use std::any::TypeId;
 use std::marker::PhantomData;
 
 use crate::asset_collection::AssetCollection;
-use crate::dynamic_asset::{DynamicAssetCollection, DynamicAssetCollections};
+use crate::dynamic_asset::{ DynamicAssetCollection, DynamicAssetCollections };
 
-use config::{ConfigureLoadingState, LoadingStateConfig};
+use config::{ ConfigureLoadingState, LoadingStateConfig };
 use dynamic_asset_systems::{
-    check_dynamic_asset_collections, load_dynamic_asset_collections,
+    check_dynamic_asset_collections,
+    load_dynamic_asset_collections,
     resume_to_loading_asset_collections,
 };
 use systems::{
-    check_loading_collection, finish_loading_state, init_resource, initialize_loading_state,
-    reset_loading_state, resume_to_finalize, start_loading_collection,
+    check_loading_collection,
+    finish_loading_state,
+    init_resource,
+    initialize_loading_state,
+    reset_loading_state,
+    resume_to_finalize,
+    start_loading_collection,
 };
 
 #[cfg(feature = "standard_dynamic_assets")]
@@ -37,14 +51,16 @@ use bevy_common_assets::ron::RonAssetPlugin;
 
 #[cfg(feature = "standard_dynamic_assets")]
 use crate::standard_dynamic_asset::{
-    StandardDynamicAsset, StandardDynamicAssetArrayCollection, StandardDynamicAssetCollection,
+    StandardDynamicAsset,
+    StandardDynamicAssetArrayCollection,
+    StandardDynamicAssetCollection,
 };
 
 #[cfg(feature = "progress_tracking")]
-use iyes_progress::TrackedProgressSet;
+use bevy_progress::TrackedProgressSet;
 
-use crate::dynamic_asset::{DynamicAsset, DynamicAssets};
-use crate::loading_state::systems::{apply_internal_state_transition, run_loading_state};
+use crate::dynamic_asset::{ DynamicAsset, DynamicAssets };
+use crate::loading_state::systems::{ apply_internal_state_transition, run_loading_state };
 
 /// A Bevy plugin to configure automatic asset loading
 ///
@@ -57,7 +73,7 @@ use crate::loading_state::systems::{apply_internal_state_transition, run_loading
 ///     App::new()
 ///         .init_state::<GameState>()
 ///         .add_plugins((MinimalPlugins, AssetPlugin::default()))
-/// #       .init_resource::<iyes_progress::ProgressCounter>()
+/// #       .init_resource::<bevy_progress::ProgressCounter>()
 ///         .add_loading_state(LoadingState::new(GameState::Loading)
 ///             .continue_to_state(GameState::Menu)
 ///             .load_collection::<AudioAssets>()
@@ -107,10 +123,7 @@ pub struct LoadingState<State: States> {
     config: LoadingStateConfig<State>,
 }
 
-impl<S> LoadingState<S>
-where
-    S: States,
-{
+impl<S> LoadingState<S> where S: States {
     /// Create a new [`LoadingState`]
     ///
     /// This function takes a [`State`] during which all asset collections will
@@ -123,7 +136,7 @@ where
     ///     App::new()
     /// #       .init_state::<GameState>()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -175,7 +188,7 @@ where
     ///     App::new()
     /// #       .init_state::<GameState>()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -220,7 +233,7 @@ where
     ///     App::new()
     /// #       .init_state::<GameState>()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -256,7 +269,7 @@ where
     #[cfg_attr(docsrs, doc(cfg(feature = "standard_dynamic_assets")))]
     pub fn add_standard_dynamic_assets(
         mut self,
-        mut dynamic_assets: HashMap<String, StandardDynamicAsset>,
+        mut dynamic_assets: HashMap<String, StandardDynamicAsset>
     ) -> Self {
         dynamic_assets.drain().for_each(|(key, value)| {
             self.dynamic_assets.insert(key, Box::new(value));
@@ -273,7 +286,7 @@ where
     #[cfg(feature = "standard_dynamic_assets")]
     pub fn set_standard_dynamic_asset_collection_file_endings(
         mut self,
-        endings: Vec<&'static str>,
+        endings: Vec<&'static str>
     ) -> Self {
         self.standard_dynamic_asset_collection_file_endings = endings;
 
@@ -293,7 +306,7 @@ where
     ///     App::new()
     /// #       .init_state::<GameState>()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -326,12 +339,10 @@ where
     pub fn build(mut self, app: &mut App) {
         app.init_resource::<AssetLoaderConfiguration<S>>();
         {
-            let mut asset_loader_configuration = app
-                .world
+            let mut asset_loader_configuration = app.world
                 .get_resource_mut::<AssetLoaderConfiguration<S>>()
                 .unwrap();
-            let mut loading_config = asset_loader_configuration
-                .state_configurations
+            let mut loading_config = asset_loader_configuration.state_configurations
                 .remove(&self.loading_state)
                 .unwrap_or_default();
             if self.next_state.is_some() {
@@ -340,9 +351,10 @@ where
             if self.failure_state.is_some() {
                 loading_config.failure = self.failure_state;
             }
-            asset_loader_configuration
-                .state_configurations
-                .insert(self.loading_state.clone(), loading_config);
+            asset_loader_configuration.state_configurations.insert(
+                self.loading_state.clone(),
+                loading_config
+            );
         }
         app.init_resource::<State<InternalLoadingState<S>>>();
         app.init_resource::<NextState<InternalLoadingState<S>>>();
@@ -350,15 +362,15 @@ where
         app.init_resource::<DynamicAssetCollections<S>>();
         #[cfg(feature = "standard_dynamic_assets")]
         if !app.is_plugin_added::<RonAssetPlugin<StandardDynamicAssetCollection>>() {
-            app.add_plugins(RonAssetPlugin::<StandardDynamicAssetCollection>::new(
-                &self.standard_dynamic_asset_collection_file_endings,
-            ));
+            app.add_plugins(
+                RonAssetPlugin::<StandardDynamicAssetCollection>::new(
+                    &self.standard_dynamic_asset_collection_file_endings
+                )
+            );
         }
         #[cfg(feature = "standard_dynamic_assets")]
         if !app.is_plugin_added::<RonAssetPlugin<StandardDynamicAssetArrayCollection>>() {
-            app.add_plugins(RonAssetPlugin::<StandardDynamicAssetArrayCollection>::new(
-                &[],
-            ));
+            app.add_plugins(RonAssetPlugin::<StandardDynamicAssetArrayCollection>::new(&[]));
         }
 
         if !app.is_plugin_added::<InternalAssetLoaderPlugin<S>>() {
@@ -370,70 +382,70 @@ where
         let loading_state_schedule = LoadingStateSchedule(self.loading_state.clone());
         let configure_loading_state = app.get_schedule(loading_state_schedule.clone()).is_none();
         app.init_schedule(loading_state_schedule.clone())
-            .init_schedule(OnEnterInternalLoadingState(
-                self.loading_state.clone(),
-                InternalLoadingState::LoadingAssets,
-            ))
-            .init_schedule(OnEnterInternalLoadingState(
-                self.loading_state.clone(),
-                InternalLoadingState::LoadingDynamicAssetCollections,
-            ))
-            .init_schedule(OnEnterInternalLoadingState(
-                self.loading_state.clone(),
-                InternalLoadingState::Finalize,
-            ));
+            .init_schedule(
+                OnEnterInternalLoadingState(
+                    self.loading_state.clone(),
+                    InternalLoadingState::LoadingAssets
+                )
+            )
+            .init_schedule(
+                OnEnterInternalLoadingState(
+                    self.loading_state.clone(),
+                    InternalLoadingState::LoadingDynamicAssetCollections
+                )
+            )
+            .init_schedule(
+                OnEnterInternalLoadingState(
+                    self.loading_state.clone(),
+                    InternalLoadingState::Finalize
+                )
+            );
 
         if configure_loading_state {
-            app.add_systems(
-                loading_state_schedule.clone(),
-                (
-                    resume_to_loading_asset_collections::<S>
-                        .in_set(InternalLoadingStateSet::ResumeDynamicAssetCollections),
-                    initialize_loading_state::<S>.in_set(InternalLoadingStateSet::Initialize),
-                    resume_to_finalize::<S>.in_set(InternalLoadingStateSet::CheckAssets),
-                    finish_loading_state::<S>.in_set(InternalLoadingStateSet::Finalize),
+            app.add_systems(loading_state_schedule.clone(), (
+                resume_to_loading_asset_collections::<S>.in_set(
+                    InternalLoadingStateSet::ResumeDynamicAssetCollections
                 ),
-            )
-            .add_systems(
-                OnEnter(self.loading_state.clone()),
-                reset_loading_state::<S>,
-            )
-            .configure_sets(Update, LoadingStateSet(self.loading_state.clone()));
+                initialize_loading_state::<S>.in_set(InternalLoadingStateSet::Initialize),
+                resume_to_finalize::<S>.in_set(InternalLoadingStateSet::CheckAssets),
+                finish_loading_state::<S>.in_set(InternalLoadingStateSet::Finalize),
+            ))
+                .add_systems(OnEnter(self.loading_state.clone()), reset_loading_state::<S>)
+                .configure_sets(Update, LoadingStateSet(self.loading_state.clone()));
             let mut loading_state_schedule = app.get_schedule_mut(loading_state_schedule).unwrap();
             loading_state_schedule
                 .configure_sets(
-                    InternalLoadingStateSet::Initialize
-                        .run_if(in_state(InternalLoadingState::<S>::Initialize)),
+                    InternalLoadingStateSet::Initialize.run_if(
+                        in_state(InternalLoadingState::<S>::Initialize)
+                    )
                 )
                 .configure_sets(
-                    InternalLoadingStateSet::CheckDynamicAssetCollections.run_if(in_state(
-                        InternalLoadingState::<S>::LoadingDynamicAssetCollections,
-                    )),
+                    InternalLoadingStateSet::CheckDynamicAssetCollections.run_if(
+                        in_state(InternalLoadingState::<S>::LoadingDynamicAssetCollections)
+                    )
                 )
                 .configure_sets(
-                    InternalLoadingStateSet::ResumeDynamicAssetCollections
-                        .after(InternalLoadingStateSet::CheckDynamicAssetCollections)
-                        .run_if(in_state(
-                            InternalLoadingState::<S>::LoadingDynamicAssetCollections,
-                        )),
+                    InternalLoadingStateSet::ResumeDynamicAssetCollections.after(
+                        InternalLoadingStateSet::CheckDynamicAssetCollections
+                    ).run_if(in_state(InternalLoadingState::<S>::LoadingDynamicAssetCollections))
                 )
                 .configure_sets(
-                    InternalLoadingStateSet::CheckAssets
-                        .run_if(in_state(InternalLoadingState::<S>::LoadingAssets)),
+                    InternalLoadingStateSet::CheckAssets.run_if(
+                        in_state(InternalLoadingState::<S>::LoadingAssets)
+                    )
                 )
                 .configure_sets(
-                    InternalLoadingStateSet::Finalize
-                        .run_if(in_state(InternalLoadingState::<S>::Finalize)),
+                    InternalLoadingStateSet::Finalize.run_if(
+                        in_state(InternalLoadingState::<S>::Finalize)
+                    )
                 );
 
             #[cfg(feature = "standard_dynamic_assets")]
             {
-                self.config = self
-                    .config
-                    .register_dynamic_asset_collection::<StandardDynamicAssetCollection>();
-                self.config = self
-                    .config
-                    .register_dynamic_asset_collection::<StandardDynamicAssetArrayCollection>();
+                self.config =
+                    self.config.register_dynamic_asset_collection::<StandardDynamicAssetCollection>();
+                self.config =
+                    self.config.register_dynamic_asset_collection::<StandardDynamicAssetArrayCollection>();
             }
 
             #[cfg(feature = "progress_tracking")]
@@ -442,14 +454,14 @@ where
                 run_loading_state::<S>
                     .in_set(TrackedProgressSet)
                     .in_set(LoadingStateSet(self.loading_state.clone()))
-                    .run_if(in_state(self.loading_state)),
+                    .run_if(in_state(self.loading_state))
             );
             #[cfg(not(feature = "progress_tracking"))]
             app.add_systems(
                 Update,
                 run_loading_state::<S>
                     .in_set(LoadingStateSet(self.loading_state.clone()))
-                    .run_if(in_state(self.loading_state)),
+                    .run_if(in_state(self.loading_state))
             );
         }
 
@@ -482,8 +494,7 @@ impl<S: States> ConfigureLoadingState for LoadingState<S> {
     }
 
     fn with_dynamic_assets_file<C: DynamicAssetCollection + Asset>(mut self, file: &str) -> Self {
-        self.config
-            .with_dynamic_assets_type_id(file, TypeId::of::<C>());
+        self.config.with_dynamic_assets_type_id(file, TypeId::of::<C>());
 
         self
     }
@@ -595,7 +606,7 @@ pub trait LoadingStateAppExt {
     /// Configure an existing loading state with, for example, additional asset collections.
     fn configure_loading_state<S: States>(
         &mut self,
-        configuration: LoadingStateConfig<S>,
+        configuration: LoadingStateConfig<S>
     ) -> &mut Self;
 
     /// Add an [`AssetCollection`] to the [`LoadingState`]
@@ -609,7 +620,7 @@ pub trait LoadingStateAppExt {
     ///     App::new()
     /// #       .init_state::<GameState>()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -644,7 +655,7 @@ pub trait LoadingStateAppExt {
     )]
     fn add_collection_to_loading_state<S: States, A: AssetCollection>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self;
 
     /// Register a new [`DynamicAssetCollection`] to be handled in the loading state
@@ -657,7 +668,7 @@ pub trait LoadingStateAppExt {
     )]
     fn register_dynamic_asset_collection<S: States, C: DynamicAssetCollection + Asset>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self;
 
     /// Register files to be loaded as a certain type of [`DynamicAssetCollection`]
@@ -675,7 +686,7 @@ pub trait LoadingStateAppExt {
     fn add_dynamic_collection_to_loading_state<S: States, C: DynamicAssetCollection + Asset>(
         &mut self,
         loading_state: S,
-        file: &str,
+        file: &str
     ) -> &mut Self;
 
     /// Add any [`FromWorld`] resource to be initialized after all asset collections are loaded.
@@ -687,7 +698,7 @@ pub trait LoadingStateAppExt {
     ///     App::new()
     /// #       .add_plugins((MinimalPlugins, AssetPlugin::default()))
     /// #       .init_state::<GameState>()
-    /// #       .init_resource::<iyes_progress::ProgressCounter>()
+    /// #       .init_resource::<bevy_progress::ProgressCounter>()
     ///         .add_loading_state(
     ///           LoadingState::new(GameState::Loading)
     ///             .continue_to_state(GameState::Menu)
@@ -728,7 +739,7 @@ pub trait LoadingStateAppExt {
     )]
     fn init_resource_after_loading_state<S: States, A: Resource + FromWorld>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self;
 }
 
@@ -741,7 +752,7 @@ impl LoadingStateAppExt for App {
 
     fn configure_loading_state<S: States>(
         &mut self,
-        configuration: LoadingStateConfig<S>,
+        configuration: LoadingStateConfig<S>
     ) -> &mut Self {
         configuration.build(self);
 
@@ -750,43 +761,41 @@ impl LoadingStateAppExt for App {
 
     fn add_collection_to_loading_state<S: States, A: AssetCollection>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self {
         self.add_systems(
             OnEnterInternalLoadingState(loading_state.clone(), InternalLoadingState::LoadingAssets),
-            start_loading_collection::<S, A>,
-        )
-        .add_systems(
+            start_loading_collection::<S, A>
+        ).add_systems(
             LoadingStateSchedule(loading_state),
-            check_loading_collection::<S, A>.in_set(InternalLoadingStateSet::CheckAssets),
+            check_loading_collection::<S, A>.in_set(InternalLoadingStateSet::CheckAssets)
         )
     }
 
     fn register_dynamic_asset_collection<S: States, C: DynamicAssetCollection + Asset>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self {
         self.add_systems(
             OnEnterInternalLoadingState(
                 loading_state.clone(),
-                InternalLoadingState::LoadingDynamicAssetCollections,
+                InternalLoadingState::LoadingDynamicAssetCollections
             ),
-            load_dynamic_asset_collections::<S, C>,
-        )
-        .add_systems(
+            load_dynamic_asset_collections::<S, C>
+        ).add_systems(
             LoadingStateSchedule(loading_state),
-            check_dynamic_asset_collections::<S, C>
-                .in_set(InternalLoadingStateSet::CheckDynamicAssetCollections),
+            check_dynamic_asset_collections::<S, C>.in_set(
+                InternalLoadingStateSet::CheckDynamicAssetCollections
+            )
         )
     }
 
     fn add_dynamic_collection_to_loading_state<S: States, C: DynamicAssetCollection + Asset>(
         &mut self,
         loading_state: S,
-        file: &str,
+        file: &str
     ) -> &mut Self {
-        let mut dynamic_asset_collections = self
-            .world
+        let mut dynamic_asset_collections = self.world
             .get_resource_mut::<DynamicAssetCollections<S>>()
             .unwrap();
 
@@ -796,11 +805,11 @@ impl LoadingStateAppExt for App {
 
     fn init_resource_after_loading_state<S: States, A: Resource + FromWorld>(
         &mut self,
-        loading_state: S,
+        loading_state: S
     ) -> &mut Self {
         self.add_systems(
             OnEnterInternalLoadingState(loading_state, InternalLoadingState::Finalize),
-            init_resource::<A>,
+            init_resource::<A>
         )
     }
 }
@@ -809,10 +818,7 @@ struct InternalAssetLoaderPlugin<S> {
     _state_marker: PhantomData<S>,
 }
 
-impl<S> InternalAssetLoaderPlugin<S>
-where
-    S: States,
-{
+impl<S> InternalAssetLoaderPlugin<S> where S: States {
     fn new() -> Self {
         InternalAssetLoaderPlugin {
             _state_marker: PhantomData,
@@ -820,10 +826,7 @@ where
     }
 }
 
-impl<S> Plugin for InternalAssetLoaderPlugin<S>
-where
-    S: States,
-{
+impl<S> Plugin for InternalAssetLoaderPlugin<S> where S: States {
     fn build(&self, app: &mut App) {
         app.add_systems(StateTransition, apply_internal_state_transition::<S>);
     }

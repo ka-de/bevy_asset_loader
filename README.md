@@ -448,7 +448,7 @@ Both `init_resource` methods from `bevy_asset_loader` do the same as Bevy's `App
 
 ## Progress tracking
 
-With the feature `progress_tracking`, you can integrate with [`iyes_progress`][iyes_progress] to track asset loading during a loading state. This, for example, enables progress bars.
+With the feature `progress_tracking`, you can integrate with [`bevy_progress`][bevy_progress] to track asset loading during a loading state. This, for example, enables progress bars.
 
 See [`progress_tracking`](/bevy_asset_loader/examples/progress_tracking.rs) for a complete example.
 
@@ -468,7 +468,7 @@ Although the pattern of a loading state is quite nice (imo), you might have reas
 
 Asset collections loaded without a loading state do not support folders or dynamic assets, since these cannot instantly create handles that will eventually point to the loaded assets.
 
-You can directly initialise asset collections on the bevy `App` or `World`. See [no_loading_state.rs](/bevy_asset_loader/examples/no_loading_state.rs) for a complete example.
+You can directly initialize asset collections on the bevy `App` or `World`. See [no_loading_state.rs](/bevy_asset_loader/examples/no_loading_state.rs) for a complete example.
 
 ```rust no_run
 use bevy::prelude::*;
@@ -501,7 +501,7 @@ The main branch is compatible with the latest Bevy release, while the branch `be
 Compatibility of `bevy_asset_loader` versions:
 
 | Bevy version | `bevy_asset_loader` version |
-|:-------------|:----------------------------|
+| :----------- | :-------------------------- |
 | `0.13`       | `0.20`                      |
 | `0.12`       | `0.18` - `0.19`             |
 | `0.11`       | `0.17`                      |
@@ -516,10 +516,7 @@ Compatibility of `bevy_asset_loader` versions:
 
 ## License
 
-Dual-licensed under either of
-
-- Apache License, Version 2.0, ([LICENSE-APACHE](/LICENSE-APACHE) or https://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](/LICENSE-MIT) or https://opensource.org/licenses/MIT)
+- MIT license ([LICENSE](/LICENSE) or https://opensource.org/licenses/MIT)
 
 at your option.
 
@@ -533,4 +530,4 @@ additional terms or conditions.
 
 [bevy]: https://bevyengine.org/
 [cheatbook-states]: https://bevy-cheatbook.github.io/programming/states.html
-[iyes_progress]: https://github.com/IyesGames/iyes_progress
+[bevy_progress]: https://github.com/ka-de/bevy_progress

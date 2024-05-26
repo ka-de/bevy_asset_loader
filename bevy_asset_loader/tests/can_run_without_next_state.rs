@@ -10,26 +10,19 @@ fn can_run_without_next_state() {
     app.init_state::<MyStates>();
 
     #[cfg(feature = "progress_tracking")]
-    app.add_plugins(iyes_progress::ProgressPlugin::new(MyStates::Load));
-    app.add_plugins((
-        MinimalPlugins,
-        AssetPlugin::default(),
-        AudioPlugin::default(),
-    ))
-    .add_loading_state(LoadingState::new(MyStates::Load).load_collection::<MyAssets>())
-    .init_resource::<TestState>()
-    .add_systems(
-        Update,
-        (
+    app.add_plugins(bevy_progress::ProgressPlugin::new(MyStates::Load));
+    app.add_plugins((MinimalPlugins, AssetPlugin::default(), AudioPlugin::default()))
+        .add_loading_state(LoadingState::new(MyStates::Load).load_collection::<MyAssets>())
+        .init_resource::<TestState>()
+        .add_systems(Update, (
             expect.run_if(in_state(MyStates::Load)),
             timeout.run_if(in_state(MyStates::Load)),
-        ),
-    )
-    .run();
+        ))
+        .run();
 }
 
 fn timeout(time: Res<Time>) {
-    if time.elapsed_seconds_f64() > 30. {
+    if time.elapsed_seconds_f64() > 30.0 {
         panic!("The asset loader did not load the collection in 30 seconds");
     }
 }
@@ -37,7 +30,7 @@ fn timeout(time: Res<Time>) {
 fn expect(
     collection: Option<Res<MyAssets>>,
     mut exit: EventWriter<AppExit>,
-    mut test_state: ResMut<TestState>,
+    mut test_state: ResMut<TestState>
 ) {
     if collection.is_some() {
         if test_state.wait_frames_after_load == 0 {

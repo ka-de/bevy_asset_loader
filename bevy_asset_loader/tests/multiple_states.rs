@@ -10,32 +10,25 @@ fn main() {
 
     #[cfg(feature = "progress_tracking")]
     app.add_plugins((
-        iyes_progress::ProgressPlugin::new(Game::Booting),
-        iyes_progress::ProgressPlugin::new(Prepare::Loading),
+        bevy_progress::ProgressPlugin::new(Game::Booting),
+        bevy_progress::ProgressPlugin::new(Prepare::Loading),
     ));
-    app.add_plugins((
-        MinimalPlugins,
-        AssetPlugin::default(),
-        AudioPlugin::default(),
-    ))
-    .add_loading_state(
-        LoadingState::new(Game::Booting)
-            .continue_to_state(Game::Loading)
-            .load_collection::<GameStateCollection>(),
-    )
-    .add_loading_state(
-        LoadingState::new(Prepare::Loading)
-            .continue_to_state(Prepare::Finalize)
-            .load_collection::<LoadingStateCollection>(),
-    )
-    .add_systems(Update, (quit.run_if(in_state(Game::Play)), timeout))
-    .add_systems(
-        OnEnter(Game::Loading),
-        (go_to_loading_loading, probe_game_state),
-    )
-    .add_systems(OnEnter(Prepare::Finalize), go_to_game_play_loading_done)
-    .add_systems(OnEnter(Game::Play), probe_loading_state)
-    .run();
+    app.add_plugins((MinimalPlugins, AssetPlugin::default(), AudioPlugin::default()))
+        .add_loading_state(
+            LoadingState::new(Game::Booting)
+                .continue_to_state(Game::Loading)
+                .load_collection::<GameStateCollection>()
+        )
+        .add_loading_state(
+            LoadingState::new(Prepare::Loading)
+                .continue_to_state(Prepare::Finalize)
+                .load_collection::<LoadingStateCollection>()
+        )
+        .add_systems(Update, (quit.run_if(in_state(Game::Play)), timeout))
+        .add_systems(OnEnter(Game::Loading), (go_to_loading_loading, probe_game_state))
+        .add_systems(OnEnter(Prepare::Finalize), go_to_game_play_loading_done)
+        .add_systems(OnEnter(Game::Play), probe_loading_state)
+        .run();
 }
 
 #[derive(Clone, Copy, Debug, States, Default, PartialEq, Eq, Hash)]
@@ -76,14 +69,14 @@ fn go_to_loading_loading(mut state: ResMut<NextState<Prepare>>) {
 
 fn go_to_game_play_loading_done(
     mut game_state: ResMut<NextState<Game>>,
-    mut loading_state: ResMut<NextState<Prepare>>,
+    mut loading_state: ResMut<NextState<Prepare>>
 ) {
     game_state.set(Game::Play);
     loading_state.set(Prepare::Done);
 }
 
 fn timeout(time: Res<Time>) {
-    if time.elapsed_seconds_f64() > 30. {
+    if time.elapsed_seconds_f64() > 30.0 {
         panic!("The app did not finish in 30 seconds");
     }
 }
