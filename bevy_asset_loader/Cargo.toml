@@ -3,10 +3,10 @@ name = "bevy_asset_loader"
 version = "0.20.2"
 authors = ["Niklas Eicker <git@nikl.me>"]
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 description = "Bevy plugin for asset loading"
-repository = "https://github.com/NiklasEi/bevy_asset_loader"
-homepage = "https://github.com/NiklasEi/bevy_asset_loader"
+repository = "https://github.com/ka-de/bevy_asset_loader"
+homepage = "https://github.com/ka-de/bevy_asset_loader"
 documentation = "https://docs.rs/bevy_asset_loader"
 keywords = ["bevy", "gamedev", "asset", "assets"]
 categories = ["game-development"]
@@ -19,23 +19,29 @@ readme = "README.md"
 # This feature adds support for bevy's StandardMaterial assets
 3d = ["bevy/bevy_pbr", "bevy_asset_loader_derive/3d"]
 standard_dynamic_assets = ["dep:bevy_common_assets", "dep:serde"]
-progress_tracking = ["dep:iyes_progress"]
+progress_tracking = ["dep:bevy_progress"]
 
 [dependencies]
-bevy = { version = "0.13", default-features = false, features = ["bevy_asset"] }
+bevy = { version = "0.13.2", default-features = false, features = [
+  "bevy_asset",
+] }
 bevy_asset_loader_derive = { version = "=0.20.2", path = "../bevy_asset_loader_derive" }
 anyhow = "1"
 path-slash = "0.2"
 
-bevy_common_assets = { version = "0.10", features = ["ron"], optional = true }
+bevy_common_assets = { git = "https://github.com/ka-de/bevy_common_assets", features = [
+  "ron",
+], optional = true }
 serde = { version = "1", optional = true }
-iyes_progress = { version = "0.11", optional = true }
+bevy_progress = { git = "https://github.com/ka-de/bevy_progress", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.13", features = ["vorbis"] }
+bevy = { version = "0.13.2", features = ["vorbis"] }
 anyhow = "1"
-iyes_progress = { version = "0.11" }
-bevy_common_assets = { version = "0.10", features = ["ron"] }
+bevy_progress = { git = "https://github.com/ka-de/bevy_progress" }
+bevy_common_assets = { git = "https://github.com/ka-de/bevy_common_assets", features = [
+  "ron",
+] }
 serde = { version = "1" }
 ron = "0.8.1"
 trybuild = { version = "1.0" }
